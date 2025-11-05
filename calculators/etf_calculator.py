@@ -24,9 +24,9 @@ class ETFCalculator(BaseCalculator):
         ter: float = 0.002,  # 0.2% TER typisch für ETFs
         capital_gains_tax: float = 0.26375,  # 25% Abgeltungssteuer + 5.5% Soli
         tax_allowance: float = 1000,  # Sparerpauschbetrag
-        order_fee: float = 0.0,  # Ordergebühr pro Ausführung
+        order_fee: float = 1.0,  # Ordergebühr pro Ausführung
         depot_fee_yearly: float = 0.0,  # Jährliche Depotgebühr
-        spread: float = 0.001,  # Spread (Geld-Brief-Spanne) als Prozent
+        spread: float = 0.002,  # Spread (Geld-Brief-Spanne) als Prozent
         initial_investment: float = 0.0,  # Einmaleinzahlung zu Beginn
         rebalancing_count: int = 0  # Anzahl der Umschichtungen während Laufzeit
     ):

@@ -59,7 +59,7 @@ def render_etf_tab():
                 "Ordergebühr pro Ausführung (€)",
                 min_value=0.0,
                 max_value=10.0,
-                value=0.0,
+                value=1.0,
                 step=0.25,
                 key="etf_order",
                 help=HELP_TEXTS["etf_order_fee"]
@@ -68,8 +68,8 @@ def render_etf_tab():
             etf_spread = st.number_input(
                 "Spread / Geld-Brief-Spanne (%)",
                 min_value=0.0,
-                max_value=1.0,
-                value=0.1,
+                max_value=5.0,
+                value=0.2,
                 step=0.05,
                 key="etf_spread",
                 help=HELP_TEXTS["etf_spread"]
@@ -282,12 +282,6 @@ def render_basisrente_tab(monthly_contribution: float, years: int):
                     key="basis_verwaltung"
                 )
 
-                # Garantiekosten
-                garantie_prozent = st.slider(
-                    "Garantiekosten (% p.a.)",
-                    0.0, 1.5, 0.3, 0.1,
-                    key="basis_garantie"
-                )
 
                 # Fondskosten
                 fonds_prozent = st.slider(
@@ -301,7 +295,7 @@ def render_basisrente_tab(monthly_contribution: float, years: int):
             abschluss_pro_jahr = (abschluss_euro / total_contributions) / years * 100
 
             # Gesamte jährliche Kosten
-            effektiv_gesamt = abschluss_pro_jahr + verwaltung_prozent + garantie_prozent + fonds_prozent
+            effektiv_gesamt = abschluss_pro_jahr + verwaltung_prozent + fonds_prozent
 
             st.markdown("---")
             st.markdown("**💡 Berechnete Effektivkosten:**")
@@ -310,7 +304,7 @@ def render_basisrente_tab(monthly_contribution: float, years: int):
             with col1:
                 st.metric("Abschluss (verteilt)", f"{abschluss_pro_jahr:.2f}% p.a.")
             with col2:
-                st.metric("Laufende Kosten", f"{verwaltung_prozent + garantie_prozent + fonds_prozent:.2f}% p.a.")
+                st.metric("Laufende Kosten", f"{verwaltung_prozent + fonds_prozent:.2f}% p.a.")
             with col3:
                 st.metric("🎯 Gesamt", f"{effektiv_gesamt:.2f}% p.a.")
 

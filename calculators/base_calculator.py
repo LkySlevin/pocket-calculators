@@ -39,7 +39,7 @@ class InvestmentResult:
     @property
     def net_investment(self) -> float:
         """Netto-Eigeninvestition = Brutto - Zulagen - Steuerersparnis"""
-        return self.gross_paid - self.state_allowances - self.tax_savings
+        return self.gross_paid - self.tax_savings
 
 
 class BaseCalculator(ABC):
