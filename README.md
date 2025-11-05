@@ -1,18 +1,152 @@
 # Pocket Calculator - Altersvorsorge-Vergleich
 
-Ein interaktives Python-Tool zum Vergleich verschiedener Altersvorsorge-Produkte in Deutschland mit Web-Interface und grafischer Darstellung.
+Ein interaktives Python-Tool zum Vergleich verschiedener Altersvorsorge-Produkte in Deutschland mit Web-Interface, detaillierten Kostenanalysen und grafischer Darstellung.
 
 ## Features
 
 - **Interaktives Web-Interface** mit Streamlit
+- **Detaillierte Kostenanalyse** für jeden Produkt-Typ (Ordergebühren, Depotgebühren, Spread, TER, Effektivkosten)
+- **Realistische Steuerberechnung** mit Günstigerprüfung und korrektem Rentensteuer-Modell
+- **Hilfetexte mit Praxisbeispielen** (Trade Republic, flatex, Versicherungstarife)
 - **Grafische Darstellung** der Vermögensentwicklung über die Jahre
-- **Vergleichsgrafiken** für alle Produkte
-- **Detaillierte Parametereinstellungen** für jedes Produkt
+- **Vergleichsgrafiken** und detaillierte Tabellen für fundierte Entscheidungen
+- **Modulare Architektur** für einfache Erweiterbarkeit
 
 Vergleicht folgende Anlageformen:
 - **ETF-Sparplan** (private Altersvorsorge)
 - **Basisrente** (Rürup-Rente)
 - **Riester-Rente**
+
+## Vergleich der Faktoren
+
+| Faktor | ETF-Sparplan | Basisrente | Riester |
+|--------|--------------|------------|---------|
+| **Förderung** | ❌ Keine | ✅ Steuerabzug | ✅ Zulagen + Steuer |
+| **Flexibilität** | ✅ Voll | ❌ Keine | ⚠️ Eingeschränkt |
+| **Kosten (p.a.)** | 0,2% - 0,5% | 1,0% - 2,0% | 1,5% - 2,5% |
+| **Rendite** | ⭐ Hoch (7%) | ⭐ Mittel-Hoch (5-7%) | ⚠️ Niedrig (3%) |
+| **Besteuerung** | Abgeltungssteuer | Nachgelagert | Nachgelagert |
+| **Garantie** | ❌ Keine | ❌ Keine | ✅ Beitragsgarantie |
+
+## Projektstruktur
+
+```
+pocket-calculators/
+├── app.py                          # Streamlit Web-App (Haupteinstieg)
+├── calculators/                    # Berechnungslogik
+│   ├── base_calculator.py          # Basisklasse für alle Rechner
+│   ├── etf_calculator.py           # ETF-Sparplan-Logik
+│   ├── basisrente_calculator.py    # Basisrente-Logik
+│   ├── riester_calculator.py       # Riester-Rente-Logik
+│   └── comparison.py               # Vergleichsfunktionen
+├── ui/                             # UI-Komponenten
+│   ├── config.py                   # Streamlit-Konfiguration
+│   ├── sidebar.py                  # Sidebar mit globalen Parametern
+│   ├── product_tabs.py             # Produkt-spezifische Eingaben
+│   └── results.py                  # Ergebnis-Anzeige und Charts
+├── utils/                          # Hilfsfunktionen
+│   └── tax_calculator.py           # Steuerberechnungen
+├── tests/                          # Unit-Tests
+│   └── test_calculators.py         # Tests für Rechner
+└── requirements.txt                # Python-Abhängigkeiten
+```
+
+## Installation
+
+### Voraussetzungen
+- Python 3.8 oder höher
+- pip (Python Package Manager)
+
+### Setup
+
+1. **Repository klonen** (falls noch nicht geschehen):
+```bash
+git clone https://github.com/yourusername/pocket-calculators.git
+cd pocket-calculators
+```
+
+2. **Virtual Environment erstellen**:
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. **Abhängigkeiten installieren**:
+```bash
+pip install -r requirements.txt
+```
+
+## Verwendung
+
+### Web-Interface starten
+
+```bash
+streamlit run app.py
+```
+
+Die App öffnet sich automatisch im Browser unter `http://localhost:8501`
+
+Um die App zu stoppen, drücken Sie `Ctrl+C` im Terminal.
+
+### Features der Web-App
+
+**Sidebar (Globale Parameter):**
+- Monatlicher Sparbeitrag
+- Einmaleinzahlung zu Beginn
+- Anlagedauer in Jahren
+- Steuersatz während Ansparphase
+- Steuersatz im Rentenalter
+- Auswahl der zu vergleichenden Produkte
+
+**Produkt-Tabs:**
+Jedes Produkt hat einen eigenen Tab mit spezifischen Parametern:
+
+- **ETF-Sparplan**: Rendite, TER, Spread, Order-/Depotgebühren, Rebalancing
+- **Basisrente**: Rendite, Effektivkosten, Honorargebühr, Brutto- vs. Nettopolice
+- **Riester-Rente**: Rendite, Effektivkosten, Anzahl Kinder, Einmalauszahlung
+
+**Ergebnisse:**
+1. **Übersichtstabelle** mit allen wichtigen Kennzahlen
+2. **Vermögensentwicklung** über die Jahre (Liniendiagramm)
+3. **Endwert-Vergleich** (Balkendiagramm)
+4. **Empfehlung** basierend auf Ihren Eingaben
+
+### Tests ausführen
+
+```bash
+# Alle Tests ausführen
+python -m pytest tests/
+
+# Tests mit Ausgabe
+python -m pytest tests/ -v
+
+# Einzelnen Test ausführen
+python -m pytest tests/test_calculators.py::test_etf_basic
+```
+
+## Wichtige Hinweise
+
+Diese Berechnungen sind **Vereinfachungen** und ersetzen keine professionelle Finanzberatung!
+
+**Nicht berücksichtigt:**
+- Inflation
+- Individuelle Vertragsbedingungen
+- Änderungen in der Gesetzgebung
+- Persönliche Flexibilitätsbedürfnisse
+- Konkrete Produkt-Kosten einzelner Anbieter
+
+**Weitere Faktoren:**
+- ETFs bieten höchste Flexibilität (jederzeit verkaufbar)
+- Riester/Rürup sind bis zur Rente gebunden
+- Riester hat Beitragsgarantie (Sicherheit vs. Rendite)
+- Steuervorteile sind individuell unterschiedlich
+
+---
 
 ## Berechnungsgrundlagen
 
@@ -243,155 +377,6 @@ Die Effektivkosten $K_{eff}$ bei Riester sind höher als bei Basisrente wegen de
 - ⚠️ Höchste Kosten aller drei Produkte (ca. 2% p.a.)
 - 💰 Bis 30% Einmalauszahlung möglich
 - 👶 Besonders vorteilhaft mit Kindern (wegen Zulagen)
-
----
-
-## Vergleich der Faktoren
-
-| Faktor | ETF-Sparplan | Basisrente | Riester |
-|--------|--------------|------------|---------|
-| **Förderung** | ❌ Keine | ✅ Steuerabzug | ✅ Zulagen + Steuer |
-| **Flexibilität** | ✅ Voll | ❌ Keine | ⚠️ Eingeschränkt |
-| **Kosten (p.a.)** | 0,2% - 0,5% | 1,0% - 2,0% | 1,5% - 2,5% |
-| **Rendite** | ⭐ Hoch (7%) | ⭐ Mittel-Hoch (5-7%) | ⚠️ Niedrig (3%) |
-| **Besteuerung** | Abgeltungssteuer | Nachgelagert | Nachgelagert |
-| **Garantie** | ❌ Keine | ❌ Keine | ✅ Beitragsgarantie |
-
-## Installation
-
-```bash
-# Virtual Environment erstellen (falls noch nicht geschehen)
-python3 -m venv venv
-
-# Virtual Environment aktivieren
-source venv/bin/activate
-
-# Abhängigkeiten installieren
-pip install -r requirements.txt
-```
-
-## Verwendung
-
-### Web-Interface (empfohlen)
-
-#### Einfache Version:
-```bash
-streamlit run app.py
-```
-
-#### ⭐ Erweiterte Version (NEU!):
-```bash
-streamlit run app_extended.py
-```
-
-**Neue Features der erweiterten Version:**
-- 💰 Detaillierte Kostenanalyse (Ordergebühren, Depotgebühren, Spread, etc.)
-- 📚 Hilfetexte mit realen Beispielen (Trade Republic, flatex, etc.)
-- 🧮 Rentensteuer-Berechnung basierend auf Gesamteinkommen
-- 📊 Erweiterte Ergebnistabelle mit Netto-Renten
-- 🔧 Kostenrechner für Abschlusskosten
-- 🎯 Übersichtlichere Oberfläche mit ausklappbaren Optionen
-
-Siehe [FEATURES.md](FEATURES.md) für Details.
-
-Die App öffnet sich automatisch im Browser unter http://localhost:8501
-
-Um die App zu stoppen, drücken Sie `Ctrl+C` im Terminal.
-
-#### Features der Web-App:
-- Eingabe aller Parameter über intuitive Formulare
-- Interaktive Grafiken mit Plotly (Zoom, Pan, Hover-Informationen)
-- Vermögensentwicklung über die Jahre
-- Balkendiagramme für Endwert-Vergleich
-- Detaillierte Tabellen mit allen Kennzahlen
-- Export-Möglichkeiten
-
-### Command-Line Interface (Alternative)
-
-#### Basis-Vergleich
-```bash
-python3 main.py
-```
-
-#### Mit eigenen Parametern
-```bash
-python3 main.py -m 500 -y 30 -t 0.42 -r 0.07
-```
-
-#### Alle Optionen
-```bash
-python3 main.py --help
-```
-
-#### CLI Parameter:
-- `-m, --monthly`: Monatlicher Sparbeitrag in Euro (Standard: 500)
-- `-y, --years`: Anlagedauer in Jahren (Standard: 30)
-- `-t, --tax-rate`: Persönlicher Steuersatz als Dezimalzahl (Standard: 0.42)
-- `-r, --return`: Erwartete jährliche ETF-Rendite (Standard: 0.07)
-- `--riester-children`: Anzahl Kinder für Riester-Zulage (Standard: 0)
-- `--yearly`: Zeige jahresweise Entwicklung
-- `--products`: Welche Produkte vergleichen (etf, basisrente, riester, all)
-
-#### CLI Beispiele
-
-**Vergleich mit 2 Kindern (Riester-Vorteil):**
-```bash
-python3 main.py -m 500 -y 30 --riester-children 2
-```
-
-**Nur ETF vs. Basisrente:**
-```bash
-python3 main.py --products etf basisrente
-```
-
-**Mit jahresweiser Entwicklung:**
-```bash
-python3 main.py --yearly
-```
-
-**Höheres Einkommen (höherer Steuersatz):**
-```bash
-python3 main.py -m 1000 -t 0.45 -y 35
-```
-
-## Screenshots & Ausgabe
-
-### Web-Interface
-Die Web-App bietet:
-1. **Interaktive Eingabeformulare** für alle Parameter
-2. **Vermögensübersicht** mit Kennzahlen für jedes Produkt
-3. **Detaillierte Vergleichstabelle** mit allen Werten
-4. **Interaktiver Linien-Chart** zeigt Vermögensentwicklung über Jahre
-5. **Balkendiagramm** für Endwert-Vergleich
-6. **Empfehlung** basierend auf Ihren Eingaben
-
-### CLI-Ausgabe
-Das CLI-Tool zeigt:
-1. Zusammenfassung aller Produkte mit:
-   - Eigene Einzahlungen
-   - Steuervorteile/Zulagen
-   - Endwert nach Steuern
-   - Gewinn und Rendite
-2. Vergleich zum besten Produkt
-3. Optional: Jahresweise Entwicklung
-4. Empfehlung mit wichtigen Hinweisen
-
-## Wichtige Hinweise
-
-Diese Berechnungen sind **Vereinfachungen** und ersetzen keine professionelle Finanzberatung!
-
-**Nicht berücksichtigt:**
-- Inflation
-- Individuelle Vertragsbedingungen
-- Änderungen in der Gesetzgebung
-- Persönliche Flexibilitätsbedürfnisse
-- Konkrete Produkt-Kosten einzelner Anbieter
-
-**Weitere Faktoren:**
-- ETFs bieten höchste Flexibilität (jederzeit verkaufbar)
-- Riester/Rürup sind bis zur Rente gebunden
-- Riester hat Beitragsgarantie (Sicherheit vs. Rendite)
-- Steuervorteile sind individuell unterschiedlich
 
 ---
 
