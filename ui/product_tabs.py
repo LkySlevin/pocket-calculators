@@ -567,6 +567,147 @@ Die verbleibenden {100 - riester_lump_sum}% werden monatlich verentet.
     }
 
 
+def render_privatrente_tab(monthly_contribution: float, years: int):
+    """
+    Rendert Tab für Privatrente-Parameter
+
+    Args:
+        monthly_contribution: Monatlicher Sparbeitrag
+        years: Anlagedauer
+
+    Returns:
+        dict: Dictionary mit Privatrente-Parametern
+    """
+    st.markdown("""
+    **Privatrente** ist eine private Rentenversicherung **ohne staatliche Förderung**.
+
+    **Vorteile:**
+    - ✅ Günstige Besteuerung bei Auszahlung (nur Ertragsanteil)
+    - ✅ Flexibel: Einmalauszahlung oder Verrentung möglich
+    - ✅ Keine Zwangsverrentung wie bei Riester/Rürup
+
+    **Nachteile:**
+    - ❌ Keine Zulagen oder Steuervorteile während Ansparphase
+    - ❌ Kosten können höher sein als ETF-Sparplan
+    """)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Rendite")
+
+        privat_return = st.number_input(
+            "Erwartete jährliche Rendite (%)",
+            min_value=0.0,
+            max_value=15.0,
+            value=5.0,
+            step=0.1,
+            key="privat_return",
+            help="""
+**Typische Renditen:**
+- Klassisch (Garantie): 1% - 2%
+- Fondsgebunden: 3% - 5%
+- ETF-basiert: 5% - 7%
+
+Je höher die Garantie, desto niedriger die Rendite.
+            """
+        ) / 100
+
+    with col2:
+        st.subheader("Kosten")
+
+        privat_effective_costs = st.number_input(
+            "Effektivkosten (% p.a.)",
+            min_value=0.0,
+            max_value=5.0,
+            value=1.8,
+            step=0.1,
+            key="privat_effective_costs",
+            help="""
+**Typische Effektivkosten:**
+- Bruttopolice: 1,5% - 2,5% p.a.
+- Nettopolice: 0,8% - 1,2% p.a.
+
+Beinhaltet Abschluss-, Verwaltungs- und Fondskosten.
+            """
+        ) / 100
+
+    with st.expander("🏦 Honorartarif / Nettopolice"):
+        st.markdown("""
+        Bei **Nettopolicen** können Sie eine einmalige Honorargebühr zahlen
+        und erhalten dafür deutlich niedrigere laufende Kosten.
+        """)
+
+        privat_honorar = st.number_input(
+            "Einmalige Honorargebühr (€)",
+            min_value=0.0,
+            max_value=10000.0,
+            value=1500.0,
+            step=500.0,
+            key="privat_honorar",
+            help="Typisch bei Nettopolicen: 1.500€ - 5.000€ einmalig"
+        )
+
+        if privat_honorar > 0:
+            st.info(f"💡 Mit Honorargebühr von {privat_honorar:,.0f}€ sollten die Effektivkosten niedriger sein (ca. 0,8-1,2%).")
+
+    st.subheader("Auszahlungsoptionen")
+
+    privat_payout = st.radio(
+        "Auszahlung im Rentenalter",
+        options=["Verrentung (nur Ertragsanteil besteuert)", "Einmalauszahlung (Halbeinkünfteverfahren)"],
+        index=0,
+        key="privat_payout",
+        help="""
+**Verrentung:**
+- Lebenslange monatliche Rente
+- Nur Ertragsanteil wird besteuert (z.B. 18% bei Alter 65)
+- Geringere Steuerlast
+
+**Einmalauszahlung:**
+- Gesamtes Kapital auf einmal
+- Halbeinkünfteverfahren: Nur 50% der Gewinne versteuern
+- Voraussetzung: 12 Jahre Laufzeit + Auszahlung ab 62 Jahren
+        """
+    )
+
+    privat_payout_option = "annuity" if "Verrentung" in privat_payout else "lump_sum"
+
+    # Renteneintrittsalter (nur bei Verrentung relevant)
+    privat_retirement_age = 67
+    if privat_payout_option == "annuity":
+        privat_retirement_age = st.slider(
+            "Alter bei Rentenbeginn",
+            min_value=50,
+            max_value=70,
+            value=67,
+            step=1,
+            key="privat_retirement_age",
+            help="Bestimmt den Ertragsanteil (je älter, desto niedriger)"
+        )
+
+        # Ertragsanteil anzeigen
+        ertragsanteil_table = {
+            50: 30, 55: 26, 60: 22, 63: 20, 65: 18, 67: 17, 70: 15
+        }
+        ertragsanteil = ertragsanteil_table.get(privat_retirement_age, 18)
+
+        st.info(f"""
+💡 **Bei Rentenbeginn mit {privat_retirement_age} Jahren:**
+- Ertragsanteil: **{ertragsanteil}%**
+- Nur {ertragsanteil}% der Rente werden besteuert
+- {100-ertragsanteil}% sind steuerfrei
+        """)
+
+    return {
+        "return": privat_return,
+        "effective_costs": privat_effective_costs,
+        "honorar_fee": privat_honorar,
+        "payout_option": privat_payout_option,
+        "retirement_age": privat_retirement_age,
+    }
+
+
 def render_product_tabs(monthly_contribution: float, years: int):
     """
     Rendert alle Produkt-Tabs
@@ -579,7 +720,12 @@ def render_product_tabs(monthly_contribution: float, years: int):
         dict: Dictionary mit allen Produkt-Parametern
     """
     st.header("🔧 Produktspezifische Parameter")
-    tab1, tab2, tab3 = st.tabs(["📈 ETF-Sparplan", "🏛️ Basisrente (Rürup)", "🎁 Riester-Rente"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📈 ETF-Sparplan",
+        "🏛️ Basisrente (Rürup)",
+        "🎁 Riester-Rente",
+        "🏦 Privatrente"
+    ])
 
     with tab1:
         etf_params = render_etf_tab()
@@ -590,8 +736,12 @@ def render_product_tabs(monthly_contribution: float, years: int):
     with tab3:
         riester_params = render_riester_tab(monthly_contribution, years)
 
+    with tab4:
+        privat_params = render_privatrente_tab(monthly_contribution, years)
+
     return {
         "etf": etf_params,
         "basisrente": basis_params,
         "riester": riester_params,
+        "privatrente": privat_params,
     }

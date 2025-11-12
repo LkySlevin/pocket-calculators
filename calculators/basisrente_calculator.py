@@ -71,8 +71,8 @@ class BasisrenteCalculator(BaseCalculator):
         # Steuerersparnis während Ansparphase (nur auf Vertragsbeiträge)
         tax_savings = contract_contributions * self.deductible_percentage * self.tax_rate
 
-        # Bruttoausgaben inkl. separater Honorargebühr
-        gross_paid = contract_contributions + self.honorar_fee
+        # Brutto-Einzahlungen (nur Vertragsbeiträge, OHNE separate Honorargebühr)
+        gross_paid = contract_contributions
 
         # Gesamtkosten über Laufzeit (für Anzeigezwecke)
         # Die Effektivkosten sind bereits in der Rendite berücksichtigt!

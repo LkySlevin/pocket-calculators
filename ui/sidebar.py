@@ -6,14 +6,26 @@ from .config import HELP_TEXTS
 from utils.tax_calculator import calculate_retirement_tax_rate
 
 
-def render_sidebar():
+def render_sidebar(user_profile: dict = None):
     """
     Rendert die Sidebar mit allgemeinen Parametern
+
+    Args:
+        user_profile: Optional - User-Profil für automatische Wert-Vorbelegung
 
     Returns:
         dict: Dictionary mit allen Sidebar-Parametern
     """
     st.sidebar.header("⚙️ Allgemeine Parameter")
+
+    # Standardwerte aus Profil übernehmen (falls vorhanden)
+    if user_profile:
+        default_years = user_profile.get("years_until_retirement", 30)
+        default_tax_rate = int(user_profile.get("tax_rate", 0.42) * 100)
+        st.sidebar.info(f"✅ Werte aus Ihrem Profil vorbelegt")
+    else:
+        default_years = 30
+        default_tax_rate = 42
 
     monthly_contribution = st.sidebar.number_input(
         "Monatlicher Sparbeitrag (€)",
@@ -28,7 +40,7 @@ def render_sidebar():
         "Anlagedauer (Jahre)",
         min_value=5,
         max_value=50,
-        value=30,
+        value=default_years,
         help=HELP_TEXTS["years"]
     )
 
@@ -36,7 +48,7 @@ def render_sidebar():
         "Persönlicher Steuersatz (%)",
         min_value=0,
         max_value=50,
-        value=42,
+        value=default_tax_rate,
         help=HELP_TEXTS["tax_rate"]
     ) / 100
 
@@ -118,6 +130,7 @@ Basierend auf:
     include_etf = st.sidebar.checkbox("ETF-Sparplan", value=True)
     include_basisrente = st.sidebar.checkbox("Basisrente (Rürup)", value=True)
     include_riester = st.sidebar.checkbox("Riester-Rente", value=True)
+    include_privatrente = st.sidebar.checkbox("Privatrente", value=True)
 
     return {
         "monthly_contribution": monthly_contribution,
@@ -131,4 +144,5 @@ Basierend auf:
         "include_etf": include_etf,
         "include_basisrente": include_basisrente,
         "include_riester": include_riester,
+        "include_privatrente": include_privatrente,
     }
