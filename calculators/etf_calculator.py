@@ -2,6 +2,7 @@
 ETF-Sparplan Rechner für private Altersvorsorge
 """
 from .base_calculator import BaseCalculator, InvestmentResult
+from .dynamics import calculate_with_contribution_dynamics, adjust_for_inflation
 
 
 class ETFCalculator(BaseCalculator):
@@ -28,7 +29,9 @@ class ETFCalculator(BaseCalculator):
         depot_fee_yearly: float = 0.0,  # Jährliche Depotgebühr
         spread: float = 0.002,  # Spread (Geld-Brief-Spanne) als Prozent
         initial_investment: float = 0.0,  # Einmaleinzahlung zu Beginn
-        rebalancing_count: int = 0  # Anzahl der Umschichtungen während Laufzeit
+        rebalancing_count: int = 0,  # Anzahl der Umschichtungen während Laufzeit
+        contribution_dynamics: float = 0.0,  # NEU: Jährliche Beitragssteigerung
+        inflation_rate: float = 0.02  # NEU: Inflationsrate für reale Werte
     ):
         """
         Args:
@@ -44,6 +47,8 @@ class ETFCalculator(BaseCalculator):
             spread: Spread (Geld-Brief-Spanne) beim Kauf
             initial_investment: Einmaleinzahlung zu Beginn
             rebalancing_count: Anzahl der Umschichtungen (Auflösung + Neuanlage)
+            contribution_dynamics: Jährliche Beitragssteigerung (0.02 = 2%)
+            inflation_rate: Inflationsrate für Kaufkraft-Berechnung (0.02 = 2%)
         """
         super().__init__(monthly_contribution, years, annual_return, tax_rate)
         self.ter = ter
@@ -54,35 +59,48 @@ class ETFCalculator(BaseCalculator):
         self.spread = spread
         self.initial_investment = initial_investment
         self.rebalancing_count = rebalancing_count
+        self.contribution_dynamics = contribution_dynamics
+        self.inflation_rate = inflation_rate
 
     def calculate(self) -> InvestmentResult:
-        """Berechnet den Endwert eines ETF-Sparplans nach Steuern (mit optionalen Umschichtungen)"""
+        """Berechnet den Endwert eines ETF-Sparplans nach Steuern (mit optionalen Umschichtungen und Dynamik)"""
 
         # Nettorendite nach TER und Spread
         net_annual_return = self.annual_return - self.ter - self.spread
 
-        # Gesamte Einzahlungen (inkl. Einmaleinzahlung)
-        total_paid = self.monthly_contribution * 12 * self.years + self.initial_investment
+        # --- MIT BEITRAGSDYNAMIK ---
+        if self.contribution_dynamics > 0:
+            # Berechnung mit dynamischen Beiträgen
+            final_value, yearly_values, total_paid = calculate_with_contribution_dynamics(
+                initial_monthly_contribution=self.monthly_contribution,
+                annual_dynamics_rate=self.contribution_dynamics,
+                years=self.years,
+                annual_return=net_annual_return,
+                initial_investment=self.initial_investment
+            )
+        else:
+            # Gesamte Einzahlungen (inkl. Einmaleinzahlung)
+            total_paid = self.monthly_contribution * 12 * self.years + self.initial_investment
 
-        # --- MIT UMSCHICHTUNGEN ---
-        if self.rebalancing_count > 0:
-            return self._calculate_with_rebalancing(net_annual_return, total_paid)
+            # --- MIT UMSCHICHTUNGEN ---
+            if self.rebalancing_count > 0:
+                return self._calculate_with_rebalancing(net_annual_return, total_paid)
 
-        # --- OHNE UMSCHICHTUNGEN (Original-Logik) ---
-        # Berechne Endwert mit Zinseszins für monatliche Sparraten
-        final_value, yearly_values = self._compound_interest(
-            self.monthly_contribution,
-            net_annual_return,
-            self.years
-        )
+            # --- OHNE UMSCHICHTUNGEN & OHNE DYNAMIK (Original-Logik) ---
+            # Berechne Endwert mit Zinseszins für monatliche Sparraten
+            final_value, yearly_values = self._compound_interest(
+                self.monthly_contribution,
+                net_annual_return,
+                self.years
+            )
 
-        # Einmaleinzahlung mit Zinseszins
-        if self.initial_investment > 0:
-            # Spread-Kosten bei Einmalkauf
-            initial_after_spread = self.initial_investment * (1 - self.spread)
-            # Wachstum der Einmaleinzahlung
-            initial_growth = initial_after_spread * ((1 + net_annual_return) ** self.years)
-            final_value += initial_growth
+            # Einmaleinzahlung mit Zinseszins (nur wenn keine Dynamik)
+            if self.initial_investment > 0:
+                # Spread-Kosten bei Einmalkauf
+                initial_after_spread = self.initial_investment * (1 - self.spread)
+                # Wachstum der Einmaleinzahlung
+                initial_growth = initial_after_spread * ((1 + net_annual_return) ** self.years)
+                final_value += initial_growth
 
         # Ordergebühren (monatlich) + einmalig für Initial Investment
         total_order_fees = self.order_fee * 12 * self.years

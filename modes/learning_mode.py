@@ -70,7 +70,9 @@ def render_learning_mode():
                     depot_fee_yearly=product_params["etf"]["depot_fee"],
                     spread=product_params["etf"]["spread"],
                     initial_investment=sidebar_params["initial_investment"],
-                    rebalancing_count=product_params["etf"]["rebalancing_count"]
+                    rebalancing_count=product_params["etf"]["rebalancing_count"],
+                    contribution_dynamics=sidebar_params["contribution_dynamics"],
+                    inflation_rate=sidebar_params["inflation_rate"]
                 )
                 results.append(etf_calc.calculate())
 
@@ -85,7 +87,9 @@ def render_learning_mode():
                     tax_rate_retirement=sidebar_params["tax_rate_retirement"],
                     effective_costs=product_params["basisrente"]["effective_costs"],
                     honorar_fee=product_params["basisrente"]["honorar_fee"],
-                    initial_investment=sidebar_params["initial_investment"]
+                    initial_investment=sidebar_params["initial_investment"],
+                    contribution_dynamics=sidebar_params["contribution_dynamics"],
+                    inflation_rate=sidebar_params["inflation_rate"]
                 )
                 results.append(basis_calc.calculate())
 
@@ -100,7 +104,9 @@ def render_learning_mode():
                     tax_rate_retirement=sidebar_params["tax_rate_retirement"],
                     effective_costs=product_params["riester"]["effective_costs"],
                     children_allowance=product_params["riester"]["children"] * 300,
-                    lump_sum_percentage=product_params["riester"]["lump_sum"]
+                    lump_sum_percentage=product_params["riester"]["lump_sum"],
+                    contribution_dynamics=sidebar_params["contribution_dynamics"],
+                    inflation_rate=sidebar_params["inflation_rate"]
                 )
                 results.append(riester_calc.calculate())
 
@@ -117,7 +123,9 @@ def render_learning_mode():
                     honorar_fee=product_params["privatrente"]["honorar_fee"],
                     initial_investment=sidebar_params["initial_investment"],
                     payout_option=product_params["privatrente"]["payout_option"],
-                    retirement_age=product_params["privatrente"]["retirement_age"]
+                    retirement_age=product_params["privatrente"]["retirement_age"],
+                    contribution_dynamics=sidebar_params["contribution_dynamics"],
+                    inflation_rate=sidebar_params["inflation_rate"]
                 )
                 results.append(privat_calc.calculate())
 

@@ -124,6 +124,97 @@ Basierend auf:
     ) / 100
 
     st.sidebar.markdown("---")
+    st.sidebar.header("📈 Dynamiken & Inflation")
+
+    st.sidebar.markdown("""
+    **Beitragsdynamik** erhöht Ihren Sparbeitrag jährlich.
+    **Inflation** berücksichtigt die Kaufkraft im Alter.
+    """)
+
+    # Beitragsdynamik Ansparphase
+    contribution_dynamics = st.sidebar.slider(
+        "Beitragsdynamik Ansparphase (%/Jahr)",
+        min_value=0.0,
+        max_value=5.0,
+        value=2.0,
+        step=0.5,
+        help="""**Jährliche Steigerung Ihres Sparbeitrags**
+
+Typische Werte:
+- **0%**: Konstanter Beitrag (einfach, planbar)
+- **1-2%**: Inflationsausgleich (empfohlen)
+- **2-3%**: Gehaltsanpassung mitwachsen
+- **3-5%**: Karriereentwicklung / Sparquote erhöhen
+
+**Beispiel:**
+- Start: 500 €/Monat
+- Nach 10 Jahren (2% Dynamik): 610 €/Monat
+- Nach 30 Jahren (2% Dynamik): 906 €/Monat
+
+**Vorteil:** Höheres Endkapital ohne Verzicht heute!
+**Nachteil:** Langfristige Bindung höherer Beträge
+        """
+    ) / 100
+
+    # Rentendynamik Auszahlungsphase
+    pension_dynamics = st.sidebar.slider(
+        "Rentendynamik Auszahlungsphase (%/Jahr)",
+        min_value=0.0,
+        max_value=3.0,
+        value=1.0,
+        step=0.5,
+        help="""**Jährliche Steigerung Ihrer Rente**
+
+Typische Werte:
+- **0%**: Konstante Rente (einfach)
+- **1%**: Teilweiser Inflationsausgleich
+- **2%**: Vollständiger Inflationsausgleich (meist)
+- **3%**: Überinflationäre Steigerung
+
+**Beispiel:**
+- Start: 2.000 €/Monat
+- Nach 10 Jahren (1% Dynamik): 2.209 €/Monat
+- Nach 25 Jahren (1% Dynamik): 2.565 €/Monat
+
+**Vorteil:** Kaufkraft bleibt erhalten
+**Nachteil:** Anfangsrente ist niedriger (mehr Kapital nötig)
+        """
+    ) / 100
+
+    # Inflationsrate
+    inflation_rate = st.sidebar.slider(
+        "Erwartete Inflation (%/Jahr)",
+        min_value=0.0,
+        max_value=5.0,
+        value=2.0,
+        step=0.5,
+        help="""**Durchschnittliche Inflation über Anlagedauer**
+
+Historische Werte (Deutschland):
+- **1991-2020**: ca. 1,8% p.a.
+- **2000-2020**: ca. 1,4% p.a.
+- **2010-2020**: ca. 1,2% p.a.
+- **2021-2024**: ca. 5-8% p.a. (Ausnahme!)
+- **EZB-Ziel**: 2% p.a. (langfristig)
+
+**Empfehlung:** 2% für langfristige Planung
+
+**Bedeutung:**
+- 100.000 € heute = 74.000 € Kaufkraft in 15 Jahren (bei 2% Inflation)
+- 2.000 € Rente heute = 1.480 € Kaufkraft in 15 Jahren
+
+**Wichtig für Altersvorsorge:** Immer real (inflationsbereinigt) rechnen!
+        """
+    ) / 100
+
+    # Inflationsanpassung anzeigen
+    show_real_values = st.sidebar.checkbox(
+        "Inflationsbereinigte Werte anzeigen",
+        value=True,
+        help="Zeigt Kaufkraft (real) statt nominaler Beträge"
+    )
+
+    st.sidebar.markdown("---")
     st.sidebar.header("📊 Produkte auswählen")
 
     # Checkboxen für Produktauswahl
@@ -141,6 +232,10 @@ Basierend auf:
         "company_pension": company_pension,
         "yearly_pension_income": yearly_pension_income,
         "tax_rate_retirement": tax_rate_retirement,
+        "contribution_dynamics": contribution_dynamics,
+        "pension_dynamics": pension_dynamics,
+        "inflation_rate": inflation_rate,
+        "show_real_values": show_real_values,
         "include_etf": include_etf,
         "include_basisrente": include_basisrente,
         "include_riester": include_riester,

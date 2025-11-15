@@ -308,10 +308,32 @@ def render_optimization_results(profile: dict, optimization_params: dict):
     ruerup_return = 0.05 - 0.015  # 5% - 1.5% Kosten
     privat_return = 0.05 - 0.018  # 5% - 1.8% Kosten
 
-    # Einfache Endwert-Berechnung (ohne Zinseszins-Details)
-    def calculate_future_value(monthly, rate, years):
-        months = years * 12
-        return monthly * (((1 + rate/12) ** months - 1) / (rate/12))
+    # Endwert-Berechnung mit optionaler Dynamik
+    def calculate_future_value(monthly, rate, years, dynamics=0.02):
+        """
+        Berechnet Endwert mit Beitragsdynamik.
+
+        Args:
+            monthly: Monatlicher Beitrag
+            rate: Jährliche Rendite
+            years: Anlagedauer
+            dynamics: Jährliche Beitragssteigerung (default 2%)
+        """
+        if dynamics == 0:
+            # Ohne Dynamik: Standard-Formel
+            months = years * 12
+            return monthly * (((1 + rate/12) ** months - 1) / (rate/12))
+        else:
+            # Mit Dynamik: Jahr für Jahr berechnen
+            from calculators.dynamics import calculate_with_contribution_dynamics
+            final_capital, _, _ = calculate_with_contribution_dynamics(
+                initial_monthly_contribution=monthly,
+                annual_dynamics_rate=dynamics,
+                years=years,
+                annual_return=rate,
+                initial_investment=0
+            )
+            return final_capital
 
     etf_value = calculate_future_value(etf_amount, etf_return, years) if etf_amount > 0 else 0
     riester_value = calculate_future_value(riester_amount, riester_return, years) if riester_amount > 0 else 0

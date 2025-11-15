@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(findstr:*)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(python -m unittest:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

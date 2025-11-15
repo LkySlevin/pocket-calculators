@@ -2,6 +2,7 @@
 Privatrente (Private Rentenversicherung) Rechner
 """
 from .base_calculator import BaseCalculator, InvestmentResult
+from .dynamics import calculate_with_contribution_dynamics
 
 
 class PrivatrenteCalculator(BaseCalculator):
@@ -36,7 +37,9 @@ class PrivatrenteCalculator(BaseCalculator):
         honorar_fee: float = 0.0,  # Einmalige Honorargebühr (bei Nettopolicen)
         initial_investment: float = 0.0,  # Einmaleinzahlung zu Beginn
         payout_option: str = "annuity",  # "annuity" oder "lump_sum"
-        retirement_age: int = 67  # Alter bei Rentenbeginn
+        retirement_age: int = 67,  # Alter bei Rentenbeginn
+        contribution_dynamics: float = 0.0,  # NEU: Jährliche Beitragssteigerung
+        inflation_rate: float = 0.02  # NEU: Inflationsrate
     ):
         """
         Args:
@@ -58,6 +61,8 @@ class PrivatrenteCalculator(BaseCalculator):
         self.initial_investment = initial_investment
         self.payout_option = payout_option
         self.retirement_age = retirement_age
+        self.contribution_dynamics = contribution_dynamics
+        self.inflation_rate = inflation_rate
 
     def calculate(self) -> InvestmentResult:
         """Berechnet den Endwert einer Privatrente nach Steuern"""

@@ -90,6 +90,31 @@ def render_quick_check_mode():
             )
 
         st.markdown("---")
+        st.subheader("📈 Dynamiken (optional)")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            contribution_dynamics = st.slider(
+                "Beitragsdynamik (%/Jahr)",
+                min_value=0.0,
+                max_value=5.0,
+                value=2.0,
+                step=0.5,
+                help="Jährliche Steigerung der Sparrate"
+            ) / 100
+
+        with col2:
+            inflation_rate = st.slider(
+                "Erwartete Inflation (%/Jahr)",
+                min_value=0.0,
+                max_value=5.0,
+                value=2.0,
+                step=0.5,
+                help="Zur Berechnung der realen Kaufkraft"
+            ) / 100
+
+        st.markdown("---")
 
         if st.button("🔍 Vertrag analysieren", type="primary", use_container_width=True):
             # Analyse durchführen
@@ -97,6 +122,37 @@ def render_quick_check_mode():
 
             # Berechne Nettorendite
             net_return = expected_return - total_costs
+            net_return_decimal = net_return / 100
+
+            # Endwert berechnen (mit Dynamik falls > 0)
+            if contribution_dynamics > 0:
+                from calculators.dynamics import calculate_with_contribution_dynamics
+                final_value, _, total_paid = calculate_with_contribution_dynamics(
+                    initial_monthly_contribution=monthly_contribution,
+                    annual_dynamics_rate=contribution_dynamics,
+                    years=contract_duration,
+                    annual_return=net_return_decimal,
+                    initial_investment=0
+                )
+            else:
+                # Ohne Dynamik: Standard-Formel
+                months = contract_duration * 12
+                monthly_rate = net_return_decimal / 12
+                if monthly_rate > 0:
+                    final_value = monthly_contribution * (((1 + monthly_rate) ** months - 1) / monthly_rate)
+                else:
+                    final_value = monthly_contribution * months
+                total_paid = monthly_contribution * months
+
+            # Inflation berücksichtigen (reale Kaufkraft)
+            if inflation_rate > 0:
+                from calculators.dynamics import calculate_real_return
+                real_return = calculate_real_return(net_return_decimal, inflation_rate)
+                real_return_percent = real_return * 100
+                real_final_value = final_value / ((1 + inflation_rate) ** contract_duration)
+            else:
+                real_return_percent = net_return
+                real_final_value = final_value
 
             # Bewertung
             if net_return < 2.0:
@@ -128,16 +184,41 @@ def render_quick_check_mode():
             </div>
             """, unsafe_allow_html=True)
 
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
 
             with col1:
                 st.metric("Bruttorendite", f"{expected_return:.1f}%")
             with col2:
                 st.metric("Kosten", f"{total_costs:.1f}%")
             with col3:
-                st.metric("Nettorendite", f"{net_return:.1f}%")
+                st.metric("Nettorendite (nominal)", f"{net_return:.1f}%")
+            with col4:
+                st.metric("Nettorendite (real)", f"{real_return_percent:.1f}%")
 
             st.markdown(explanation)
+
+            # Zusätzliche Metriken für Endwert
+            st.markdown("---")
+            st.subheader("💰 Prognostizierter Endwert")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("Eingezahlt gesamt", f"{total_paid:,.0f} €")
+            with col2:
+                st.metric("Endwert (nominal)", f"{final_value:,.0f} €")
+            with col3:
+                st.metric("Endwert (Kaufkraft)", f"{real_final_value:,.0f} €")
+
+            profit = final_value - total_paid
+            if total_paid > 0:
+                roi = (profit / total_paid) * 100
+                st.info(f"**Gewinn:** {profit:,.0f} € (+{roi:.1f}%)")
+
+            if contribution_dynamics > 0:
+                st.caption(f"✓ Beitragsdynamik von {contribution_dynamics*100:.1f}% p.a. berücksichtigt")
+            if inflation_rate > 0:
+                st.caption(f"✓ Inflation von {inflation_rate*100:.1f}% p.a. berücksichtigt (Kaufkraft-Anzeige)")
 
             # Vergleich mit Alternativen
             st.markdown("---")

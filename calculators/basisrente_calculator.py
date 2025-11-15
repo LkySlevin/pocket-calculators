@@ -2,6 +2,7 @@
 Basisrente (Rürup-Rente) Rechner
 """
 from .base_calculator import BaseCalculator, InvestmentResult
+from .dynamics import calculate_with_contribution_dynamics
 
 
 class BasisrenteCalculator(BaseCalculator):
@@ -25,7 +26,9 @@ class BasisrenteCalculator(BaseCalculator):
         tax_rate_retirement: float = 0.30,  # Oft niedriger im Alter
         effective_costs: float = 0.015,  # 1.5% Effektivkosten pro Jahr (inkl. aller Kosten)
         honorar_fee: float = 0.0,  # Einmalige Honorargebühr (bei Nettopolicen)
-        initial_investment: float = 0.0  # Einmaleinzahlung zu Beginn
+        initial_investment: float = 0.0,  # Einmaleinzahlung zu Beginn
+        contribution_dynamics: float = 0.0,  # NEU: Jährliche Beitragssteigerung
+        inflation_rate: float = 0.02  # NEU: Inflationsrate
     ):
         """
         Args:
@@ -38,6 +41,8 @@ class BasisrenteCalculator(BaseCalculator):
             effective_costs: Effektivkosten pro Jahr (beinhaltet Abschluss-, Verwaltungs- und laufende Kosten)
             honorar_fee: Einmalige Honorargebühr (typisch bei Nettopolicen: 1.500€ - 5.000€)
             initial_investment: Einmaleinzahlung zu Beginn
+            contribution_dynamics: Jährliche Beitragssteigerung (0.02 = 2%)
+            inflation_rate: Inflationsrate (0.02 = 2%)
         """
         super().__init__(monthly_contribution, years, annual_return, tax_rate)
         self.deductible_percentage = deductible_percentage
@@ -45,28 +50,42 @@ class BasisrenteCalculator(BaseCalculator):
         self.effective_costs = effective_costs
         self.honorar_fee = honorar_fee
         self.initial_investment = initial_investment
+        self.contribution_dynamics = contribution_dynamics
+        self.inflation_rate = inflation_rate
 
     def calculate(self) -> InvestmentResult:
-        """Berechnet den Endwert einer Basisrente nach Steuern"""
+        """Berechnet den Endwert einer Basisrente nach Steuern (mit optionaler Dynamik)"""
 
         # Nettorendite nach Effektivkosten
         net_annual_return = self.annual_return - self.effective_costs
 
-        # Berechne Endwert mit Zinseszins für monatliche Beiträge
-        final_value_gross, yearly_values = self._compound_interest(
-            self.monthly_contribution,
-            net_annual_return,
-            self.years
-        )
+        # --- MIT BEITRAGSDYNAMIK ---
+        if self.contribution_dynamics > 0:
+            # Berechnung mit dynamischen Beiträgen
+            final_value_gross, yearly_values, contract_contributions = calculate_with_contribution_dynamics(
+                initial_monthly_contribution=self.monthly_contribution,
+                annual_dynamics_rate=self.contribution_dynamics,
+                years=self.years,
+                annual_return=net_annual_return,
+                initial_investment=self.initial_investment
+            )
+        else:
+            # --- OHNE DYNAMIK (Original-Logik) ---
+            # Berechne Endwert mit Zinseszins für monatliche Beiträge
+            final_value_gross, yearly_values = self._compound_interest(
+                self.monthly_contribution,
+                net_annual_return,
+                self.years
+            )
 
-        # Einmaleinzahlung mit Zinseszins
-        if self.initial_investment > 0:
-            # Wachstum der Einmaleinzahlung (nach Effektivkosten)
-            initial_growth = self.initial_investment * ((1 + net_annual_return) ** self.years)
-            final_value_gross += initial_growth
+            # Einmaleinzahlung mit Zinseszins
+            if self.initial_investment > 0:
+                # Wachstum der Einmaleinzahlung (nach Effektivkosten)
+                initial_growth = self.initial_investment * ((1 + net_annual_return) ** self.years)
+                final_value_gross += initial_growth
 
-        # Vertragsbezogene Einzahlungen (Beiträge + ggf. Einmalbetrag)
-        contract_contributions = self.monthly_contribution * 12 * self.years + self.initial_investment
+            # Vertragsbezogene Einzahlungen (Beiträge + ggf. Einmalbetrag)
+            contract_contributions = self.monthly_contribution * 12 * self.years + self.initial_investment
 
         # Steuerersparnis während Ansparphase (nur auf Vertragsbeiträge)
         tax_savings = contract_contributions * self.deductible_percentage * self.tax_rate

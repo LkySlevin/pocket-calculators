@@ -3,11 +3,24 @@ User Profiling - Erfassung der Nutzerdaten für personalisierte Berechnungen
 """
 import streamlit as st
 from utils.tax_calculator import calculate_tax_rate
+from ui.risk_profiling import (
+    render_risk_profiling,
+    render_kpi_definition,
+    calculate_risk_class,
+    RiskProfile,
+    RISK_CLASSES,
+    show_risk_profile_complete
+)
 
 
 def render_user_profile_form():
     """
     Rendert das User-Profile Formular zur Erfassung der persönlichen Daten.
+
+    Jetzt erweitert mit:
+    - IDD-Risikoprofil (Risikoklassen 1-5 nach GDV/DIN 77223)
+    - Nutzer-KPIs (Renditeziel, Kostentoleranz, Prioritäten)
+    - Multi-Step Wizard mit Fortschrittsanzeige
 
     Returns:
         dict: User-Profil mit allen relevanten Daten oder None wenn nicht komplett
@@ -16,10 +29,20 @@ def render_user_profile_form():
 
     st.markdown("""
     Um Ihnen die besten Empfehlungen geben zu können, benötigen wir einige Informationen
-    über Ihre persönliche Situation.
+    über Ihre persönliche Situation. Dieser Prozess ist **verpflichtend** gemäß IDD-Richtlinie.
 
     **Alle Daten werden nur lokal verarbeitet und nicht gespeichert.**
     """)
+
+    # Multi-Step Wizard: Fortschritt anzeigen
+    if 'profiling_step' not in st.session_state:
+        st.session_state.profiling_step = 1
+
+    # Fortschrittsbalken
+    total_steps = 3
+    progress = st.session_state.profiling_step / total_steps
+    st.progress(progress)
+    st.caption(f"Schritt {st.session_state.profiling_step} von {total_steps}")
 
     st.markdown("---")
 
@@ -132,28 +155,103 @@ def render_user_profile_form():
 
     st.markdown("---")
 
-    # Bestätigung
-    col1, col2 = st.columns([3, 1])
+    # Multi-Step Navigation
+    if st.session_state.profiling_step == 1:
+        # Schritt 1: Persönliche Daten
+        col1, col2 = st.columns([3, 1])
 
-    with col1:
-        st.info("💡 Diese Daten werden für personalisierte Empfehlungen und Voreinstellungen verwendet.")
+        with col1:
+            st.info("💡 Diese Daten werden für personalisierte Empfehlungen und Voreinstellungen verwendet.")
 
-    with col2:
-        if st.button("✅ Weiter", type="primary", use_container_width=True):
-            # Profil erstellen und speichern
-            profile = {
-                "age": age,
-                "gross_salary": gross_salary,
-                "children": children,
-                "retirement_age": retirement_age,
-                "church_tax": church_tax,
-                "married": married,
-                "partner_salary": partner_salary,
-                "tax_rate": effective_tax_rate,
-                "years_until_retirement": years_until_retirement,
-            }
+        with col2:
+            if st.button("Weiter ➡️", type="primary", use_container_width=True):
+                # Temporär speichern
+                st.session_state.profiling_data = {
+                    "age": age,
+                    "gross_salary": gross_salary,
+                    "children": children,
+                    "retirement_age": retirement_age,
+                    "church_tax": church_tax,
+                    "married": married,
+                    "partner_salary": partner_salary,
+                    "tax_rate": effective_tax_rate,
+                    "years_until_retirement": years_until_retirement,
+                }
+                st.session_state.profiling_step = 2
+                st.rerun()
 
-            return profile
+    elif st.session_state.profiling_step == 2:
+        # Schritt 2: IDD-Risikoprofil
+        st.markdown("---")
+
+        knowledge_level, experience_level, loss_tolerance, investment_horizon = render_risk_profiling()
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col1:
+            if st.button("⬅️ Zurück", use_container_width=True):
+                st.session_state.profiling_step = 1
+                st.rerun()
+
+        with col3:
+            if st.button("Weiter ➡️", type="primary", use_container_width=True):
+                # Risikoprofil berechnen
+                profile_data = st.session_state.profiling_data
+                risk_class, explanation = calculate_risk_class(
+                    knowledge_level=knowledge_level,
+                    experience_level=experience_level,
+                    loss_tolerance=loss_tolerance,
+                    investment_horizon=investment_horizon,
+                    age=profile_data['age']
+                )
+
+                # Risikoprofil erstellen und speichern
+                risk_profile = RiskProfile(
+                    risk_class=risk_class,
+                    risk_label=RISK_CLASSES[risk_class]['label'],
+                    description=RISK_CLASSES[risk_class]['description'],
+                    knowledge_level=knowledge_level,
+                    experience_level=experience_level,
+                    loss_tolerance=loss_tolerance,
+                    investment_horizon=investment_horizon
+                )
+
+                st.session_state.profiling_data['risk_profile'] = risk_profile.to_dict()
+                st.session_state.profiling_data['risk_explanation'] = explanation
+                st.session_state.profiling_step = 3
+                st.rerun()
+
+    elif st.session_state.profiling_step == 3:
+        # Schritt 3: KPI-Definition
+        st.markdown("---")
+
+        kpis = render_kpi_definition()
+
+        st.markdown("---")
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col1:
+            if st.button("⬅️ Zurück", use_container_width=True):
+                st.session_state.profiling_step = 2
+                st.rerun()
+
+        with col3:
+            if st.button("✅ Profil abschließen", type="primary", use_container_width=True):
+                # KPIs hinzufügen
+                st.session_state.profiling_data['kpis'] = kpis
+
+                # Profil vollständig
+                profile = st.session_state.profiling_data
+
+                # Zusammenfassung anzeigen
+                st.success("✅ Profil erfolgreich erstellt!")
+
+                # Risikoprofil anzeigen
+                risk_profile = RiskProfile(**profile['risk_profile'])
+                show_risk_profile_complete(risk_profile, kpis)
+
+                return profile
 
     return None
 

@@ -2,6 +2,7 @@
 Riester-Rente Rechner
 """
 from .base_calculator import BaseCalculator, InvestmentResult
+from .dynamics import calculate_with_contribution_dynamics
 
 
 class RiesterCalculator(BaseCalculator):
@@ -27,7 +28,9 @@ class RiesterCalculator(BaseCalculator):
         children_allowance: float = 0,  # Kinderzulage pro Jahr
         effective_costs: float = 0.02,  # 2% Effektivkosten pro Jahr (inkl. aller Kosten)
         max_deductible: float = 2100,  # Maximaler Sonderausgabenabzug
-        lump_sum_percentage: float = 0.0  # Prozent Einmalauszahlung (max 30%)
+        lump_sum_percentage: float = 0.0,  # Prozent Einmalauszahlung (max 30%)
+        contribution_dynamics: float = 0.0,  # NEU: Jährliche Beitragssteigerung
+        inflation_rate: float = 0.02  # NEU: Inflationsrate
     ):
         """
         Args:
@@ -41,6 +44,8 @@ class RiesterCalculator(BaseCalculator):
             effective_costs: Effektivkosten pro Jahr (beinhaltet Abschluss-, Verwaltungs- und laufende Kosten)
             max_deductible: Maximaler Sonderausgabenabzug
             lump_sum_percentage: Prozent Einmalauszahlung bei Rentenbeginn (max 30%)
+            contribution_dynamics: Jährliche Beitragssteigerung (0.02 = 2%)
+            inflation_rate: Inflationsrate (0.02 = 2%)
         """
         super().__init__(monthly_contribution, years, annual_return, tax_rate)
         self.tax_rate_retirement = tax_rate_retirement
@@ -49,6 +54,8 @@ class RiesterCalculator(BaseCalculator):
         self.effective_costs = effective_costs
         self.max_deductible = max_deductible
         self.lump_sum_percentage = min(lump_sum_percentage, 30.0) / 100  # Max 30%
+        self.contribution_dynamics = contribution_dynamics
+        self.inflation_rate = inflation_rate
 
     def calculate(self) -> InvestmentResult:
         """Berechnet den Endwert einer Riester-Rente nach Steuern"""
